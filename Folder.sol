@@ -19,11 +19,12 @@ contract Folder {
         uint256[] CourseIds;
         uint256[] ExperimentIds;
         uint256 Time;
+        //TODO:blockNum
     }
 
     Folder[] Folders;
     mapping(uint256 => mapping(address => uint256)) Scores;
-
+    //TODO:加一个打分数组
     function addFolder(string memory _name, uint256 _fatherNode, string memory _class, string memory _tag, string memory _description) public returns (bool){
         uint nextId = Folders.length;
         Folder memory folder = Folder({
@@ -43,6 +44,7 @@ contract Folder {
         );
         Folders.push(folder);
         return true;
+        //对父文件夹进行子节点添加操作
     }
 
     function addCourseToFolder(uint256 _folderId, uint256 _courseId) public returns (bool){
@@ -61,12 +63,12 @@ contract Folder {
         return true;
     }
 
-    function modifyFolderInfo(uint256 _folderId, string memory _name, uint256 _fatherNode, string memory _class, string memory _tag, string memory _description) public returns (bool){
-        Folders[_folderId].Name=_name;
-        Folders[_folderId].FatherNode=_fatherNode;
-        Folders[_folderId].Class=_class;
-        Folders[_folderId].Tag=_tag;
-        Folders[_folderId].Description=_description;
+    function modifyFolderInfo(uint256 _folderId, string memory _name, string memory _class, string memory _tag, string memory _description) public returns (bool){
+        Folders[_folderId].Name = _name;
+        //Folders[_folderId].FatherNode=_fatherNode;
+        Folders[_folderId].Class = _class;
+        Folders[_folderId].Tag = _tag;
+        Folders[_folderId].Description = _description;
         return true;
     }
 
@@ -86,6 +88,7 @@ contract Folder {
         return true;
     }
 
+    //TODO:需要有两个角色：作者角色和普通角色
     function getChildFoldersId(uint256 _folderId) public returns (uint256[] memory){
         return Folders[_folderId].ChildNode;
     }

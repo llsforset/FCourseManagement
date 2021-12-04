@@ -1,12 +1,14 @@
-/// @title Course -- Course Management
+/// @title Experiment -- Experiment Management
 /// @author BloodMoon - <nerbonic@gmail.com>
+/// @author 5579 -<1025714986@qq.com>
 /// @version 0.1
 /// @date 2021-12-3
 import "./ILog.sol";
+
 pragma solidity ^0.8.0;
 
-contract Course {
-    struct Course {
+contract Experiment {
+    struct Experiment {
         uint256 Id;
         string Name;
         address Author;
@@ -26,25 +28,27 @@ contract Course {
     }
 
     ILog iLog;
+
     mapping(uint256 => string[]) Filenames;
     mapping(uint256 => mapping(string => File)) Files;
     mapping(uint256 => address[]) arrayScores;
     mapping(uint256 => mapping(address => uint256)) Scores;
-    Course[] courses;
+    Experiment[] experiments;
     constructor(address adrs){
         iLog = ILog(adrs);
     }
-    //查看当前调用用户是否有权限进行课件的修改
+
+    //查看当前调用用户是否有权限进行综合实验的修改
     modifier checkAuthority(uint256 _id){
-        address author = courses[_id].Author;
-        require(msg.sender == author || checkIfAuthority(courses[_id].Operators), "not authority");
+        address author = experiments[_id].Author;
+        require(msg.sender == author || checkIfAuthority(experiments[_id].Operators), "not authority");
         _;
     }
-    //添加课件信息
-    function addCourseInfo(string memory _name, string memory _tag, bool _status, string memory _class, string memory _description) public returns (Course memory){
-        require(!checkIfMyCourseNameExist(_name), "name exist");
-        uint256 nextid = courses.length;
-        Course memory course = Course({
+    //添加综合实验信息
+    function addExperimentInfo(string memory _name, string memory _tag, bool _status, string memory _class, string memory _description) public returns (Experiment memory){
+        require(!checkIfMyExperimentNameExist(_name), "name exist");
+        uint256 nextid = experiments.length;
+        Experiment memory experiment = Experiment({
         Id : nextid,
         Name : _name,
         Author : msg.sender,
@@ -56,43 +60,56 @@ contract Course {
         Time : block.timestamp,
         BlockNum : block.number}
         );
-        courses.push(course);
-        iLog.addLog("Course", "addCourse", msg.sender, nextid, true);
-        return course;
+        experiments.push(experiment);
+        iLog.addLog("Experiment", "addExperimentInfo", msg.sender, nextid, true);
+        return experiment;
     }
-    //获取课件信息
-    function getCourseInfo(uint256 _id) public returns (Course memory){
-        Course memory retCourse = courses[_id];
-        return retCourse;
+    //避免一个作者重复添加实验
+    function checkIfMyExperimentNameExist(string memory _name) public returns (bool){
+        uint length = experiments.length;
+        for (uint i = 0; i < length; i++) {
+            if (experiments[i].Author == msg.sender && hashCompareInternal(_name, experiments[i].Name)) {
+                return true;
+            }
+        }
+        return false;
     }
-    //修改课件信息
-    function modifyCourseInfo(uint256 _id, string memory _name, string memory _tag, bool _status, string memory _class, string memory _description)
-    public checkAuthority(_id) returns (Course memory){
+    //获取综合实验信息
+    function getExperimentInfo(uint256 _id) public returns (Experiment memory){
+        Experiment memory retExperiment = experiments[_id];
+        return retExperiment;
+    }
+    //修改综合实验信息
+    function modifyExperimentInfo(uint256 _id, string memory _name, string memory _tag, bool _status, string memory _class, string memory _description)
+    public checkAuthority(_id) returns (Experiment memory){
 
-        address author = courses[_id].Author;
+        address author = experiments[_id].Author;
 
-        courses[_id].Name = _name;
-        courses[_id].Tag = _tag;
-        courses[_id].Status = _status;
-        courses[_id].Class = _class;
-        courses[_id].Description = _description;
-        courses[_id].Time = block.timestamp;
-        iLog.addLog("Course", "modifyCourseInfo", msg.sender, _id, true);
-        return courses[_id];
+        experiments[_id].Name = _name;
+
+        experiments[_id].Tag = _tag;
+        experiments[_id].Status = _status;
+        //需要输入true或false、输入任意值或不输入
+        experiments[_id].Class = _class;
+        experiments[_id].Description = _description;
+        experiments[_id].Time = block.timestamp;
+
+        iLog.addLog("Experiment", "modifyExperimentInfo", msg.sender, _id, true);
+        return experiments[_id];
 
 
     }
-    //删除课件
-    function disableCourse(uint256 _id) checkAuthority(_id) public returns (bool){
-        courses[_id].Status = false;
-        iLog.addLog("Course", "disableCourse", msg.sender, _id, true);
+    //删除综合实验
+    function disableExperiment(uint256 _id) public returns (bool){
+        experiments[_id].Status = false;
+        iLog.addLog("Experiment", "disableExperiment", msg.sender, _id, true);
         return true;
     }
-    //string类型的比较 作用？？
+    //string类型的比较
     function hashCompareInternal(string memory a, string memory b) internal pure returns (bool) {
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
-    //查看当前地址是否在传入的地址数组中
+    //查看当前地址是否在操作者地址数组中
     function checkIfAuthority(address[] memory _operators) private returns (bool){
         for (uint i = 0; i < _operators.length; i++) {
             if (_operators[i] == msg.sender) {
@@ -101,8 +118,8 @@ contract Course {
         }
         return false;
     }
-    //获取课件的上传信息
-    function getCourseUploadInfo(uint256 _id) public returns (string[] memory, string[] memory){
+    //获取综合实验的上传信息
+    function getExperimentUploadInfo(uint256 _id) public returns (string[] memory, string[] memory){
         string[] memory names = Filenames[_id];
         uint sum = 0;
         for (uint i = 0; i < names.length; i++) {
@@ -123,53 +140,51 @@ contract Course {
         return (paths, names);
     }
     //添加上传文件的信息
-    //TODO:需要一个检查当前文件名是否存在数组当中(view)
-    function addCourseUpload(uint256 _id, string memory _filepath, string memory _filename) checkAuthority(_id) public returns (bool){
+    function addExperimentUpload(uint256 _id, string memory _filepath, string memory _filename) checkAuthority(_id) public returns (bool){
         if (checkIfExist(_filename, Filenames[_id])) {return false;}
         else {
             Filenames[_id].push(_filename);
             File memory file = File({Path : _filepath, enable : true});
             Files[_id][_filename] = file;
-            iLog.addLog("Course", "Upload", msg.sender, _id, true);
+            iLog.addLog("Experiment", "addExperimentUpload", msg.sender, _id, true);
             return true;
         }
+
     }
 
     function checkUploadIfExist(uint256 _id, string memory _filename) public returns (bool){
         return !checkIfExist(_filename, Filenames[_id]);
     }
     //修改上传文件的信息
-    function modifyCourseUpload(uint256 _id, string memory _filepath, string memory _filename) checkAuthority(_id) public returns (bool){
+    function modifyExperimentUpload(uint256 _id, string memory _filepath, string memory _filename) checkAuthority(_id) public returns (bool){
         Files[_id][_filename].Path = _filepath;
-        iLog.addLog("Course", strConcat("modifyUpload:", _filename), msg.sender, _id, true);
+        iLog.addLog("Experiment", strConcat("modifyExperimentUpload", _filepath), msg.sender, _id, true);
         return true;
     }
     //删除上传文件的信息
-    function deleteCourseUpload(uint256 _id, string memory _filename) checkAuthority(_id) public returns (bool){
+    function deleteExperimentUpload(uint256 _id, string memory _filename) checkAuthority(_id) public returns (bool){
         Files[_id][_filename].enable = false;
-        iLog.addLog("Course", strConcat("deleteUpload:", _filename), msg.sender, _id, true);
+        iLog.addLog("Experiment", "deleteExperimentUpload", msg.sender, _id, true);
         return true;
     }
     //重新启用上传文件
-    function enableCourseUpload(uint256 _id, string memory _filename) checkAuthority(_id) public returns (bool){
+    function enableExperimentUpload(uint256 _id, string memory _filename) checkAuthority(_id) public returns (bool){
         Files[_id][_filename].enable = true;
-        iLog.addLog("Course", strConcat("enableUpload:", _filename), msg.sender, _id, true);
+        iLog.addLog("Experiment", "enableExperimentUpload", msg.sender, _id, true);
         return true;
     }
-    //查看上传文件是否删除
-    function getCourseUpload(uint256 _id, string memory _filename) checkAuthority(_id) public returns (bool){
+    //查看上传文件状态
+    function getExperimentUpload(uint256 _id, string memory _filename) checkAuthority(_id) public returns (bool){
         return Files[_id][_filename].enable;
     }
-
     //添加operator
-    //TODO2:仅作者操作
     function addOperator(uint256 _id, address _newOperator) checkAuthority(_id) public returns (bool){
-        if (!checkIfExist(_newOperator, courses[_id].Operators)) {
-            courses[_id].Operators.push(_newOperator);
-            iLog.addLog("Course", strConcat("addOperator:", toString(_newOperator)), msg.sender, _id, true);
+        if (!checkIfExist(_newOperator, experiments[_id].Operators)) {
+            experiments[_id].Operators.push(_newOperator);
+            iLog.addLog("Experiment", strConcat("addOperatorSucceed", toString(_newOperator)), msg.sender, _id, true);
             return true;
         }
-        iLog.addLog("Course", strConcat("addOperator:", toString(_newOperator)), msg.sender, _id, false);
+        iLog.addLog("Experiment", strConcat("addOperatorFail", toString(_newOperator)), msg.sender, _id, true);
         return false;
 
     }
@@ -196,13 +211,12 @@ contract Course {
         require(score <= 100 && score >= 0, "score overflow");
         if (checkIfExist(msg.sender, arrayScores[_id])) {
             Scores[_id][msg.sender] = score;
-            iLog.addLog("Course", strConcat(strConcat(toString(msg.sender), "-Score-"), toString(score)), msg.sender, _id, true);
-
         } else {
             Scores[_id][msg.sender] = score;
             arrayScores[_id].push(msg.sender);
-            iLog.addLog("Course", strConcat(strConcat(toString(msg.sender), "-ReScore-"), toString(score)), msg.sender, _id, true);
         }
+
+        iLog.addLog("Experiment", strConcat("addScore:", toString(score)), msg.sender, _id, true);
         return score;
     }
     //平均分统计
@@ -216,34 +230,25 @@ contract Course {
         return sum / length;
     }
 
-    function checkIfMyCourseNameExist(string memory _name) public returns (bool){
-        uint length = courses.length;
-        for (uint i = 0; i < length; i++) {
-            if (courses[i].Author == msg.sender && hashCompareInternal(_name, courses[i].Name)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
-    function getAllMyCourseInfo() public returns (Course[] memory){
+    function getAllMyExperimentInfo() public returns (Experiment[] memory){
 
-        uint length = courses.length;
+        uint length = experiments.length;
         uint sum = 0;
         for (uint i = 0; i < length; i++) {
-            if (courses[i].Author == msg.sender) {
+            if (experiments[i].Author == msg.sender) {
                 sum++;
             }
         }
-        Course[] memory myCourses = new Course[](sum);
+        Experiment[] memory myExperiment = new Experiment[](sum);
         uint j = 0;
         for (uint i = 0; i < length; i++) {
-            if (courses[i].Author == msg.sender) {
-                myCourses[j] = courses[i];
+            if (experiments[i].Author == msg.sender) {
+                myExperiment[j] = experiments[i];
                 j++;
             }
         }
-        return myCourses;
+        return myExperiment;
     }
 
     //==============================string工具函数==============================
@@ -282,5 +287,4 @@ contract Course {
         }
         return string(str);
     }
-
 }
