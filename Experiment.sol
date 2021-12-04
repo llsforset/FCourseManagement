@@ -118,7 +118,6 @@ contract Experiment {
             Files[_id][_filename] = file;
             return true;
         }
-
     }
     //修改上传文件的信息
     function modifyExperimentUpload(uint256 _id, string memory _filepath, string memory _filename) checkAuthority(_id) public returns (bool){
@@ -164,7 +163,7 @@ contract Experiment {
         return true;
     }
 
-    function getAllMyCourseInfo() public returns (Experiment[] memory){
+    function getAllMyExperimentInfo() public returns (Experiment[] memory){
         Experiment[] memory myExperiment;
         uint length = experiments.length;
         uint j = 0;
