@@ -35,7 +35,7 @@ contract User {
         _;
     }
     modifier checkAdminAuthority(){//检查管理员权限
-        require(checkIfExist(msg.sender, allAdmins));
+        require(users[msg.sender].authority==Authority.admin||users[msg.sender].authority==Authority.superAdmin);
         _;
     }
     modifier updateAllUsers(){//更新AllUsers数组
@@ -89,6 +89,7 @@ contract User {
         users[msg.sender].Name = _name;
         users[msg.sender].StuNo = _stuNo;
         users[msg.sender].Grade = _grade;
+        users[msg.sender].identity=_identity;
         users[msg.sender].NameNoHash = keccak256(abi.encode(_stuNo, _name));
         iLog.addLog_User("User", "UserModifyHisInfo", msg.sender, users[msg.sender].Name, true);
         return users[msg.sender];
@@ -124,52 +125,37 @@ contract User {
     // }
     //TODO:加入管理员权限验证
     //TODO:返回的应该是user数组
-    function getAllUsers() checkAdminAuthority() public returns (User[] memory){
+    function getAllUsers() checkAdminAuthority() public view returns (User[] memory){
         User[] memory allUserInfo = new User[](allUsers.length);
         for (uint i = 0; i < allUsers.length; i++) {
             allUserInfo[i] = users[allUsers[i]];
         }
-        iLog.addLog_User("User", "getAllAdmins", msg.sender, users[msg.sender].Name, true);
         return allUserInfo;
     }
     //TODO:只有超级管理员能查看 //TODO:返回的应该是user数组
-    function getAllAdmins() checkSuperAdminAuthority() public returns (User[] memory){
+    function getAllAdmins() checkSuperAdminAuthority() public view returns (User[] memory){
         User[] memory AllAdminInfo = new User [](allAdmins.length);
         //全局变量可以动态，局部变量需要固定长度;全局变量与局部变量定义数据的方式有点不同
         for (uint i = 0; i < allAdmins.length; i++) {
             AllAdminInfo[i] = users[allAdmins[i]];
         }
-        iLog.addLog_User("User", "SuperAdminGetAllAdmins", msg.sender, users[msg.sender].Name, true);
         return AllAdminInfo;
     }
-    //TODO:加入管理员权限
-    function getUserInfo(address userAdrs) checkAdminAuthority() public returns (User memory, bool){
-        if (!checkIfExist(userAdrs, allUsers)) {
-            return (users[userAdrs], false);
-        } else {
-            return (users[userAdrs], true);
-        }
-        iLog.addLog_User("User", "AdminGetUserInfo", msg.sender, users[msg.sender].Name, true);
+    function getUserInfo(address userAdrs) checkAdminAuthority() public view returns (User memory){
+        require(users[msg.sender].authority==Authority.admin||users[msg.sender].authority==Authority.superAdmin);
+        return users[userAdrs];
     }
 
-    function getMyInfo() public returns (User memory, bool){
-        if (!checkIfExist(msg.sender, allUsers)) {
-            iLog.addLog_User("User", "getMyInfo", msg.sender, users[msg.sender].Name, false);
-            return (users[msg.sender], false);
-        } else {
-            iLog.addLog_User("User", "getMyInfo", msg.sender, users[msg.sender].Name, true);
-            return (users[msg.sender], true);
-        }
+    function getMyInfo() public view returns (User memory){
+        return users[msg.sender];
     }
 
     function checkIfExist(address adrs, address[] memory adrss) public returns (bool){
         for (uint i = 0; i < adrss.length; i++) {
             if (adrss[i] == adrs) {
-                iLog.addLog_User("User", "getMyInfo", msg.sender, users[msg.sender].Name, true);
                 return true;
             }
         }
-        iLog.addLog_User("User", "upUserToAdmin", msg.sender, users[msg.sender].Name, false);
         return false;
     }
     //==============================string工具函数==============================

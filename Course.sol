@@ -61,7 +61,7 @@ contract Course {
         return course;
     }
     //获取课件信息
-    function getCourseInfo(uint256 _id) public returns (Course memory){
+    function getCourseInfo(uint256 _id) public view returns (Course memory){
         Course memory retCourse = courses[_id];
         return retCourse;
     }
@@ -102,7 +102,7 @@ contract Course {
         return false;
     }
     //获取课件的上传信息
-    function getCourseUploadInfo(uint256 _id) public returns (string[] memory, string[] memory){
+    function getCourseUploadInfo(uint256 _id) public view returns (string[] memory, string[] memory){
         string[] memory names = Filenames[_id];
         uint sum = 0;
         for (uint i = 0; i < names.length; i++) {
@@ -157,7 +157,7 @@ contract Course {
         return true;
     }
     //查看上传文件是否删除
-    function getCourseUpload(uint256 _id, string memory _filename) checkAuthority(_id) public returns (bool){
+    function getCourseUpload(uint256 _id, string memory _filename) view public returns (bool){
         return Files[_id][_filename].enable;
     }
 
@@ -206,7 +206,7 @@ contract Course {
         return score;
     }
     //平均分统计
-    function calculateScore(uint256 _id) public returns (uint256){
+    function calculateScore(uint256 _id) public view returns (uint256){
         uint256 sum = 0;
         uint256 length = arrayScores[_id].length;
         for (uint i = 0; i < length; i++) {
@@ -226,7 +226,7 @@ contract Course {
         return false;
     }
 
-    function getAllMyCourseInfo() public returns (Course[] memory){
+    function getAllMyCourseInfo() public view returns (Course[] memory){
 
         uint length = courses.length;
         uint sum = 0;
@@ -245,7 +245,9 @@ contract Course {
         }
         return myCourses;
     }
-
+    function getAllCourseInfo() public view returns (Course[] memory){
+        return courses;
+    }
     //==============================string工具函数==============================
     function strConcat(string memory _a, string memory _b) internal returns (string memory){
         bytes memory _ba = bytes(_a);

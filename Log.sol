@@ -26,7 +26,7 @@ contract Log {
     }
 
     //TODO:合约交互：管理员可以获取日志信息
-    function getMyLog() public returns (Log[] memory){
+    function getMyLog() public view returns (Log[] memory){
 
         uint j = 0;
         uint sum = 0;
@@ -45,7 +45,7 @@ contract Log {
         return retLogs;
     }
 
-    function getCourseLog(uint256 _courseId) public returns (Log[] memory){
+    function getCourseLog(uint256 _courseId) public view returns (Log[] memory){
         uint j = 0;
         uint sum = 0;
         for (uint i = 0; i < logs.length; i++) {
@@ -64,7 +64,7 @@ contract Log {
 
     }
 
-    function getExperimentLog(uint256 _experimentId) public returns (Log[] memory){
+    function getExperimentLog(uint256 _experimentId) public view returns (Log[] memory){
         uint j = 0;
         uint sum = 0;
         for (uint i = 0; i < logs.length; i++) {
@@ -86,7 +86,7 @@ contract Log {
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
 
-    function getUserLog(address _userAddress) public returns (Log[] memory){
+    function getUserLog(address _userAddress) public view returns (Log[] memory){
         uint j = 0;
         uint sum = 0;
         for (uint i = 0; i < logs.length; i++) {

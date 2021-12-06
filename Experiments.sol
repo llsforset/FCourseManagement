@@ -75,7 +75,7 @@ contract Experiment {
         return false;
     }
     //获取综合实验信息
-    function getExperimentInfo(uint256 _id) public returns (Experiment memory){
+    function getExperimentInfo(uint256 _id) public view returns (Experiment memory){
         Experiment memory retExperiment = experiments[_id];
         return retExperiment;
     }
@@ -119,7 +119,7 @@ contract Experiment {
         return false;
     }
     //获取综合实验的上传信息
-    function getExperimentUploadInfo(uint256 _id) public returns (string[] memory, string[] memory){
+    function getExperimentUploadInfo(uint256 _id) public view returns (string[] memory, string[] memory){
         string[] memory names = Filenames[_id];
         uint sum = 0;
         for (uint i = 0; i < names.length; i++) {
@@ -174,7 +174,7 @@ contract Experiment {
         return true;
     }
     //查看上传文件状态
-    function getExperimentUpload(uint256 _id, string memory _filename) checkAuthority(_id) public returns (bool){
+    function getExperimentUpload(uint256 _id, string memory _filename) public view returns (bool){
         return Files[_id][_filename].enable;
     }
     //添加operator
@@ -220,7 +220,7 @@ contract Experiment {
         return score;
     }
     //平均分统计
-    function calculateScore(uint256 _id) public returns (uint256){
+    function calculateScore(uint256 _id) public view returns (uint256){
         uint256 sum = 0;
         uint256 length = arrayScores[_id].length;
         for (uint i = 0; i < length; i++) {
@@ -231,7 +231,7 @@ contract Experiment {
     }
 
 
-    function getAllMyExperimentInfo() public returns (Experiment[] memory){
+    function getAllMyExperimentInfo() public view returns (Experiment[] memory){
 
         uint length = experiments.length;
         uint sum = 0;
@@ -250,7 +250,9 @@ contract Experiment {
         }
         return myExperiment;
     }
-
+    function getAllExperimentInfo() public view returns (Experiment[] memory){
+        return experiments;
+    }
     //==============================string工具函数==============================
     function strConcat(string memory _a, string memory _b) internal returns (string memory){
         bytes memory _ba = bytes(_a);
