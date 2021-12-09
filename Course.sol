@@ -248,6 +248,13 @@ contract Course {
     function getAllCourseInfo() public view returns (Course[] memory){
         return courses;
     }
+    function getCourseInfoByArray(uint256[] memory Ids) public view returns(Course[] memory){
+        Course[] memory retcourses=new Course[](Ids.length);
+        for(uint i=0;i<Ids.length;i++){
+            retcourses[i]=courses[i];
+        }
+        return retcourses;
+    }
     //==============================string工具函数==============================
     function strConcat(string memory _a, string memory _b) internal returns (string memory){
         bytes memory _ba = bytes(_a);
