@@ -6,6 +6,27 @@ import "./ILog.sol";
 pragma solidity ^0.8.0;
 
 contract Course {
+    //枚举（0待审核，1已审核，2审核拒绝，3删除）
+    //审核功能：刚刚发布一个课件时，状态置为待审核
+    //在user里写一个函数，输入msg.sender(address),输出一个true/FALSE，判断这个人是否是管理员/超级管理员
+    //在Course合约里调用这个函数，用接口，参考ILog
+
+    //最后在Course里面写入审核核心逻辑function2，需要一个审核函数，功能是修改一个课件的状态从待审核到已审核、拒绝
+    //输入course的id和审核结果，返回值true。判断一下msg.sender的权限，
+    //根据id和审核结果，修改具体的course的status
+    //关于审核意见，结构体中加入一个string[]，结构体中再加入一个address[]
+    //每次输入的是：id，审核结果，一个string，和一个msg.sender
+
+    //查：查当前所有待审核的课件
+    //查当前所有待审核的课件function1，参考getAllMyCourseInfo，修改两个判断中的author为status==待审核
+    //查当前所有待审核的课件，加入权限判断
+
+    //页面：1、添加一个新页面，待审核列表页面，function1
+    //2、具体的审核页面，点进去之后，显示上传信息，只不过多了两个输入
+    //第一个输入：结果：写死到前端：拒绝或通过；第二个输入：string，审核意见
+    //调用function2
+
+
     struct Course {
         uint256 Id;
         string Name;
