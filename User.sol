@@ -46,6 +46,13 @@ contract User {
         _;
         allAdmins.push(_adrs);
     }
+
+    function checkIfCanCheck(address _adrs) public returns(bool){
+        if(_adrs==superAdmin||users[_adrs].authority==Authority.admin||users[_adrs].authority==Authority.superAdmin||checkIfExist(_adrs,allAdmins)){
+            return true;
+        }
+        return false;
+    }
     //TODO:加入超级管理员修改用户信息的功能
     function SuperdminModify(string memory _name, uint256 _stuNo, uint256 _grade, Identity _identity, address ModifiedUser) public returns (bool){
         require((msg.sender == superAdmin), "you aren't superadmin");

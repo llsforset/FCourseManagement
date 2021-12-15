@@ -3,6 +3,7 @@
 /// @version 0.1
 /// @date 2021-12-3
 import "./ILog.sol";
+import "./IUser.sol";
 pragma solidity ^0.8.0;
 
 contract Course {
@@ -25,20 +26,22 @@ contract Course {
     //2、具体的审核页面，点进去之后，显示上传信息，只不过多了两个输入
     //第一个输入：结果：写死到前端：拒绝或通过；第二个输入：string，审核意见
     //调用function2
-
+    enum Check {NotCheck,RefuseCheck,PastCheck,Delete}//1215
 
     struct Course {
         uint256 Id;
         string Name;
         address Author;
         string Tag;
-        bool Status;
+        Check Status;
         address[] Operators;
 
         string Class;
         string Description;
         uint256 Time;
         uint256 BlockNum;
+        string[] CheckComments;//1215
+        address[] Checker;//1215
     }
 
     struct File {
@@ -47,13 +50,80 @@ contract Course {
     }
 
     ILog iLog;
+    IUser iUser;   //1215
+
     mapping(uint256 => string[]) Filenames;
     mapping(uint256 => mapping(string => File)) Files;
     mapping(uint256 => address[]) arrayScores;
     mapping(uint256 => mapping(address => uint256)) Scores;
     Course[] courses;
-    constructor(address adrs){
-        iLog = ILog(adrs);
+    constructor(address _logAddress,address _userAddress){//1215
+        iLog = ILog(_logAddress);
+        iUser=IUser(_userAddress);//1215
+    }
+    //1215
+    function checkCourse(uint256 _id,Check result,string memory checkComment) public returns(bool){
+        require(iUser.checkIfCanCheck(msg.sender));
+        courses[_id].Status=result;
+        courses[_id].CheckComments.push(checkComment);
+        courses[_id].Checker.push(msg.sender);
+        iLog.addLog("Course", "checkCourse", msg.sender, _id, true);
+        return true;
+
+    }
+    //1215
+    function getNotCheck() public view returns(Course[] memory){
+        uint length = courses.length;
+        uint sum = 0;
+        for (uint i = 0; i < length; i++) {
+            if (courses[i].Status == Check.NotCheck) {
+                sum++;
+            }
+        }
+        Course[] memory myCourses = new Course[](sum);
+        uint j = 0;
+        for (uint i = 0; i < length; i++) {
+            if (courses[i].Status == Check.NotCheck) {
+                myCourses[j] = courses[i];
+                j++;
+            }
+        }
+        return myCourses;
+    }
+    //1215
+    function checkBatch(uint256[] memory _ids,Check[] memory _results,string[] memory _comments) public returns(bool){
+        uint length=_ids.length;
+        for(uint i=0;i<length;i++){
+            checkCourse(_ids[i],_results[i],_comments[i]);
+        }
+        return true;
+
+    }
+    //1215
+    function addCourseInfoWithUpload(string memory _name, string memory _tag, string memory _class, string memory _description,string[] memory _filename,string[] memory _filepath) public returns (Course memory){
+        require(!checkIfMyCourseNameExist(_name), "name exist");
+        uint256 nextid = courses.length;
+        Course memory course = Course({
+        Id : nextid,
+        Name : _name,
+        Author : msg.sender,
+        Tag : _tag,
+        Status : Check.NotCheck,
+        Operators : new address[](0),
+        Checker:new address[](0),
+        CheckComments:new string[](0),
+        Class : _class,
+        Description : _description,
+        Time : block.timestamp,
+        BlockNum : block.number}
+        );
+        courses.push(course);
+        for(uint i=0;i<_filename.length;i++){
+            addCourseUpload(nextid, _filepath[i], _filename[i]);
+        }
+
+        iLog.addLog("Course", "addCourseInfoWithUpload", msg.sender, nextid, true);
+        return course;
     }
     //查看当前调用用户是否有权限进行课件的修改
     modifier checkAuthority(uint256 _id){
@@ -62,7 +132,8 @@ contract Course {
         _;
     }
     //添加课件信息
-    function addCourseInfo(string memory _name, string memory _tag, bool _status, string memory _class, string memory _description) public returns (Course memory){
+    //1215
+    function addCourseInfo(string memory _name, string memory _tag, string memory _class, string memory _description) public returns (Course memory){
         require(!checkIfMyCourseNameExist(_name), "name exist");
         uint256 nextid = courses.length;
         Course memory course = Course({
@@ -70,8 +141,10 @@ contract Course {
         Name : _name,
         Author : msg.sender,
         Tag : _tag,
-        Status : _status,
+        Status : Check.NotCheck,
         Operators : new address[](0),
+        Checker:new address[](0),
+        CheckComments:new string[](0),
         Class : _class,
         Description : _description,
         Time : block.timestamp,
@@ -87,14 +160,14 @@ contract Course {
         return retCourse;
     }
     //修改课件信息
-    function modifyCourseInfo(uint256 _id, string memory _name, string memory _tag, bool _status, string memory _class, string memory _description)
+    //1215
+    function modifyCourseInfo(uint256 _id, string memory _name, string memory _tag, string memory _class, string memory _description)
     public checkAuthority(_id) returns (Course memory){
 
         address author = courses[_id].Author;
 
         courses[_id].Name = _name;
         courses[_id].Tag = _tag;
-        courses[_id].Status = _status;
         courses[_id].Class = _class;
         courses[_id].Description = _description;
         courses[_id].Time = block.timestamp;
@@ -105,7 +178,7 @@ contract Course {
     }
     //删除课件
     function disableCourse(uint256 _id) checkAuthority(_id) public returns (bool){
-        courses[_id].Status = false;
+        courses[_id].Status = Check.Delete;
         iLog.addLog("Course", "disableCourse", msg.sender, _id, true);
         return true;
     }
